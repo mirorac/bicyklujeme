@@ -33,5 +33,9 @@ map.on('draw.create', (i) => {
       "line-color": ["get", "color"],
       "line-opacity": 0.5
     },
+    layout: {
+      'line-cap': 'round',
+      'line-join': 'round'
+      },
   });
 })

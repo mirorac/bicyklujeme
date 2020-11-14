@@ -9,6 +9,7 @@
 <script src="https://api.tiles.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js"></script>
 <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.js"></script>
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.css" type="text/css" />
+<script src="/js/ors.js"></script>
 <style>
 	body { margin: 0; padding: 0; }
 	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -28,11 +29,108 @@
     zoom: 15 // starting zoom
   });
 
+  const destination = [17.151429904825818, 48.1600897443393]
+  const safetyRoutes = [
+    [[17.14370769496753,48.158372542498455],[17.144155629734513,48.158565886931825],[17.144735310021474,48.15884711389796],[17.14510419747674,48.158987726802934],[17.14544673582853,48.159128339322024],[17.145868321492117,48.15926895145617],[17.14652704909082,48.15956775096126],[17.14755466414485,48.15991927756312],[17.14810799532691,48.16005988752943],[17.14889846844568,48.16021807328045],[17.148977515757394,48.15969078554576],[17.149030213965773,48.15909318622852],[17.14976798887622,48.159128339322024],[17.15029497095486,48.15916349239194],[17.15079560393019,48.15921622195117],[17.151243538697145,48.159286527945966],[17.15200766271252,48.15932168090697],[17.151985949504848,48.15967250439422],[17.151552159844044,48.15963805647442],[17.15144887659136,48.15969317313562],[17.151417891615637,48.16009276715815]],
+  ]
+
+  map.on('load', () => {
+    map.addSource("safety", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              color: "#4ed54b", // green
+            },
+            geometry: {
+              type: "LineString",
+              coordinates: safetyRoutes[0],
+            },
+          },
+        ],
+      },
+    })
+
+    map.addLayer({
+      'id': 'safety',
+      'type': 'line',
+      'source': 'safety',
+      'layout': {
+        'line-cap': 'round',
+        'line-join': 'round'
+      },
+      'paint': {
+        'line-color': '#4ed54b',
+        'line-width': 10,
+        'line-opacity': 0.5
+      }
+    })
+  })
+
+  let useSafety = true
+
+  map.on('click', (e) => {
+    const source = [e.lngLat.lng, e.lngLat.lat]
+
+    if (useSafety) {
+
+      getDistances({source, routes: safetyRoutes}, (data) => {
+  
+        //console.log(data)
+  
+        let index = data.distances[0].indexOf(Math.min(...data.distances[0].slice(1)))
+        customRoute = safetyRoutes[0][index-1]
+  
+        let params = {
+          coordinates: [
+            source,
+            customRoute
+          ]
+        }
+  
+        getDirections(params, (data) => {
+          const coords = data.features[0].geometry.coordinates
+          geojson.features[0].geometry.coordinates = [...coords, ...safetyRoutes[0].slice(index)]
+          map.getSource('route').setData(geojson)
+        })
+  
+      })
+
+    } else {
+      let params = {
+        coordinates: [
+          source,
+          destination
+        ]
+      }
+
+      getDirections(params, (data) => {
+        const coords = data.features[0].geometry.coordinates
+        geojson.features[0].geometry.coordinates = coords
+        map.getSource('route').setData(geojson)
+      })
+    }
+
+
+  })
+
+
+  function x(source, destination, safetyRoutes) {
+    
+  }
 
 </script>
  
 <script src="/js/draw.js"></script>
 <script src="/js/lines.js"></script>
+<script src="/js/directions.js"></script>
+
+<script>
+  
+</script>
 
 </body>
 </html>
